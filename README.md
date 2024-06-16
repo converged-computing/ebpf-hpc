@@ -1,19 +1,21 @@
 # ebpf-hpc
 
 We are trying to learn about ebpf and create a development environment for ebpf programs that can be ported into Kubernetes.
-We can start with examples from [cilium/ebpf](https://github.com/cilum/ebpf). What is here?
-
- - [lima](lima): instructions for running ebpf in a VM (and you can look at the VM to see setup)
- - [meetings](meetings): includes meeting notes, planning, etc.
+We can start with examples from [cilium/ebpf](https://github.com/cilum/ebpf). 
 
 ## Goals
 
  - Hari wants to profile I/O, with a more lightweight method, granted it can provide minimally the same information.
- - Vanessa wants to profile stuff in Kubernetes, with a larger scope beyond I/O.
+ - Vanessa wants to profile stuff in Kubernetes, along with single runs of HPC applications on a large VM, more generally and with a larger scope (beyond I/O).
 
 ## Organization
 
- - [kubernetes](kubernetes): testing approaches for that.
+What is here?
+
+ - [lima](lima): instructions for running ebpf in a VM (and you can look at the VM to see setup)
+ - [meetings](meetings): includes meeting notes, planning, etc.
+ - [bcc](bcc): experimenting with the bpf compiler collection ([bcc](https://github.com/iovisor/bcc))
+ - [kubernetes](kubernetes): understanding how eBPF fits into Kubernetes.
 
 ## Learning
 
@@ -397,30 +399,16 @@ Using x86_64 syscall table:
 
 </details>
 
-## Experiment Idea
 
-**Meeting in June**
+## License
 
-1. Start with hdf5 program that we know has "gaps"
-2. Run with [Darshan](https://github.com/darshan-hpc/darshan), [IOR](https://github.com/hpc/ior), [score-p](https://www.vi-hps.org/projects/score-p) etc. Are there gaps?
-3. Figure out calls we want in eBPF and try to instrument
- - First try local: https://bpfman.io/main/getting-started/example-bpf-local/
- - Then move into Kubernetes
- - If that works, metrics server or similar (need to digest nom nom data)
+HPCIC DevTools is distributed under the terms of the MIT license.
+All new contributions must be made under this license.
 
-### Storage Patterns:
+See [LICENSE](https://github.com/converged-computing/cloud-select/blob/main/LICENSE),
+[COPYRIGHT](https://github.com/converged-computing/cloud-select/blob/main/COPYRIGHT), and
+[NOTICE](https://github.com/converged-computing/cloud-select/blob/main/NOTICE) for details.
 
-- store in memory while running
-- store events as is, keep everything
-- ship it to somewhere else (streaming) dashboard or database 🛳️ 
- 
-## System Calls we care about
+SPDX-License-Identifier: (MIT)
 
-- Hari wants all the calls!! All the calls!
-- "Exporatory analysis" use a subset of traces
-  - MangoIO
-  - Look at paper to get sense of calls 
-  - There is an exhaustive list but then they filter down to interesting subset
-  
-> What can ebpf capture? What calls are at the kernel level? How do we store it correctly?
-
+LLNL-CODE- 842614
