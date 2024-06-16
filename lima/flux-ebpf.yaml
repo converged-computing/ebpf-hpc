@@ -1,0 +1,135 @@
+# This example requires Lima v0.8.0 or later
+
+# limactl start flux-lima.yaml
+# limactl shell flux-lima
+# sudo -s
+# cd /opt/learning
+
+images:
+- location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"
+  arch: "x86_64"
+- location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
+  arch: "aarch64"
+
+cpus: 4
+memory: "10GiB"
+
+mounts:
+- location: "~"
+  writable: true
+- location: "/tmp/lima"
+  writable: true
+
+provision:
+- mode: user
+  script: |
+    echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.bashrc
+    echo "export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH" >> ~/.bashrc
+
+- mode: system
+  script: |
+    apt-get update
+    apt-get install -y apt-transport-https ca-certificates curl clang llvm jq apt-utils wget
+    apt-get install -y libelf-dev libpcap-dev libbfd-dev binutils-dev build-essential make 
+    apt-get install -y linux-tools-common linux-tools-$(uname -r) 
+    apt-get install -y bpfcc-tools python3-pip git which python3-bpfcc libbpfcc-dev
+    apt-get install -y bison zlib1g-dev libfl-dev systemtap-sdt-dev libcereal-dev
+    apt-get install -y llvm-dev llvm-runtime libclang-dev libgtest-dev libgmock-dev
+    apt-get install -y asciidoctor asciidoctor libdw-dev pahole
+    apt-get install libbpf-dev make clang llvm libelf-dev
+    git clone --recurse-submodules https://github.com/lizrice/learning-ebpf /opt/learning
+    cd /opt/learning/libbpf/src
+    make install 
+    cd /opt
+    git clone --recurse-submodules https://github.com/libbpf/bpftool.git
+    cd bpftool/src
+    make install
+    export CMAKE=3.23.1
+    curl -s -L https://github.com/Kitware/CMake/releases/download/v$CMAKE/cmake-$CMAKE-linux-x86_64.sh > cmake.sh
+    sh cmake.sh --prefix=/usr/local --skip-license
+    apt-get install -y man flex ssh sudo vim luarocks munge lcov ccache lua5.2 mpich
+    apt-get install -y valgrind build-essential pkg-config autotools-dev libtool \
+    apt-get install -y libffi-dev autoconf automake make clang-6.0 clang-tidy \
+    apt-get install -y gcc g++ libpam-dev
+    apt-get install bpfcc-tools linux-headers-$(uname -r)
+    apt-get install -y libsodium-dev libzmq3-dev libczmq-dev libjansson-dev libmunge-dev
+    apt-get install -y libncursesw5-dev liblua5.2-dev liblz4-dev libsqlite3-dev uuid-dev
+    apt-get install -y libhwloc-dev libmpich-dev libs3-dev libevent-dev libarchive-dev
+    apt-get install -y libboost-graph-dev libboost-system-dev libboost-filesystem-dev
+    apt-get install -y libboost-regex-dev libyaml-cpp-dev libedit-dev
+    curl -L https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh > mambaforge.sh
+    bash mambaforge.sh -b -p /opt/conda
+    export PATH=/opt/conda/bin:$PATH
+    pip install --upgrade --ignore-installed markupsafe coverage cffi ply six pyyaml jsonschema
+    pip install --upgrade --ignore-installed sphinx sphinx-rtd-theme sphinxcontrib-spelling
+    apt-get install -y faketime libfaketime pylint cppcheck aspell aspell-en python3-bpfcc
+    locale-gen en_US.UTF-8
+    luarocks install luaposix
+    echo "deb [trusted=yes] https://repo.iovisor.org/apt/xenial xenial-nightly main" | sudo tee /etc/apt/sources.list.d/iovisor.list
+    sudo apt-get update
+    git clone https://github.com/iovisor/bpftrace /opt/bpftrace
+    cd /opt/bpftrace
+    git config --global --add safe.directory /opt/bpftrace
+    git submodule init && git submodule update --recursive
+    mkdir ./build && cd ./build
+    echo deb http://cloudfront.debian.net/debian sid main >> /etc/apt/sources.list
+    sudo apt-get install -y bpfcc-tools libbpfcc libbpfcc-dev linux-headers-$(uname -r)
+    cmake -DCMAKE_BUILD_TYPE=Release ..
+    make -j8
+    make install
+    # So we can use libbpfgo
+    wget https://go.dev/dl/go1.21.4.linux-amd64.tar.gz
+    tar -C /usr/local -xzf go1.21.4.linux-amd64.tar.gz
+    echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.bashrc
+    echo "export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH" >> ~/.bashrc
+    mkdir -p /opt/prrte
+    cd /opt/prrte
+    git clone https://github.com/openpmix/openpmix.git
+    git clone https://github.com/openpmix/prrte.git
+    set -x
+    cd openpmix
+    git checkout fefaed568f33bf86f28afb6e45237f1ec5e4de93
+    ./autogen.pl
+    ./configure --prefix=/usr --disable-static && make -j 4 install
+    ldconfig
+    cd /opt/prrte/prrte
+    git checkout 477894f4720d822b15cab56eee7665107832921c
+    ./autogen.pl
+    ./configure --prefix=/usr && make -j 4 install
+    git clone --depth 1 https://github.com/flux-framework/flux-security /opt/flux-security
+    cd /opt/flux-security
+    ./autogen.sh
+    PYTHON=/opt/conda/bin/python ./configure --prefix=/usr --sysconfdir=/etc
+    make && make install
+    mkdir -p /var/run/munge
+    dd if=/dev/urandom bs=1 count=1024 > /etc/munge/munge.key
+    chown -R munge /etc/munge/munge.key /var/run/munge
+    chmod 600 /etc/munge/munge.key
+    git clone https://github.com/flux-framework/flux-core /opt/flux-core
+    cd /opt/flux-core
+    ./autogen.sh
+    PYTHON=/opt/conda/bin/python PYTHON_PREFIX=PYTHON_EXEC_PREFIX=/opt/conda/lib/python3.8/site-packages ./configure --prefix=/usr --sysconfdir=/etc --with-flux-security
+    make clean
+    make && make install
+    git clone https://github.com/flux-framework/flux-sched /opt/flux-sched
+    cd /opt/flux-sched
+    git fetch
+    git checkout v0.30.0
+    which cmake
+    ./autogen.sh
+    PYTHON=/opt/conda/bin/python ./configure --prefix=/usr --sysconfdir=/etc
+    make && make install && ldconfig
+    touch /tmp/finished.txt
+
+probes:
+- script: |
+    #!/bin/bash
+    set -eux -o pipefail
+    if ! timeout 600s bash -c "until test -f /tmp/finished.txt; do sleep 10; done"; then
+            echo >&2 "flux build is not finished yet"
+            exit 1
+    else
+       sleep 5
+    fi
+  hint: |
+    flux build is finished.
